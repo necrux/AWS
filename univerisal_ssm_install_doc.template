@@ -1,0 +1,78 @@
+{
+   "schemaVersion":"2.0",
+   "description":"Run a script",
+   "parameters":{
+   },
+   "mainSteps":[
+      {
+         "action":"aws:runShellScript",
+         "name":"runShellScript",
+         "inputs":{
+           "runCommand":[
+             "#!/bin/bash",
+             "exec 1> >(logger -s -t SSM_Boostrap) 2>&1",
+
+             "PACKAGES=()                     #Packages to install.",
+             "SERVICES=()                     #Services to start on boot/start.",
+             "CONFIG_BUCKET=                  #Bucket containing server configs directories.",
+             "ROOT=                           #Root directory containing server configs (e.g. prod, staging, prod/mage1, etc.)",
+             "IS_ADMIN=                       #Directory containing admin specific server configs; ignored if left blank.",
+
+             "curl -s http://169.254.169.254/latest/dynamic/instance-identity/document > /tmp/identity",
+             "if hash yum > /dev/null 2>&1; then PackageMgr=yum; else PackageMgr=apt-get; fi",
+             "if hash systemctl > /dev/null 2>&1; then StartUpMgr=systemctl; elif hash update-rc.d > /dev/null 2>&1; then StartUpMgr=update-rc.d; else StartUpMgr=chkconfig; fi,
+
+             "### Setting variables just in case. ###",
+             "PrivateIp=$(awk -F\" '/privateIp/ {print $4}' /tmp/identity)",
+             "AZ=$(awk -F\" '/availabilityZone/ {print $4}' /tmp/identity)",
+             "InstanceId=$(awk -F\" '/instanceId/ {print $4}' /tmp/identity)",
+             "Account=$(awk -F\" '/accountId/ {print $4}' /tmp/identity)",
+             "Region=$(awk -F\" '/region/ {print $4}' /tmp/identity)",
+             "rm -f /tmp/identity)",
+
+             "### Check for yum/apt lock. ###",
+             "n=0",
+             "while true; do",
+             "  $PackageMgr -y update; $PackageMgr -y upgrade",
+             "  [[ $? = 0 ]] && break || ((n++))",
+             "  (( n >= 45 )) && break",
+             "done",
+
+             "### Install Packages ###",
+             "$PackageMgr -y install ${PACKAGES[@]}",
+
+             "### Enable EPEL ###",
+             "#yum-config-manager --enable epel",
+
+             "### Copy Server Configs. ###",
+             "#for config in $(aws s3 ls s3://$CONFIG_BUCKET/$CONFIG_DIR/ | awk '{print $4}'); do aws s3 cp s3://$CONFIG_BUCKET/$CONFIG_DIR/$config $(echo $config | sed 's%@%/%g'); done",
+             "#if [ ! -z $IS_ADMIN ]; then for config in $(aws s3 ls s3://$CONFIG_BUCKET/$IS_ADMIN/ | awk '{print $4}'); do aws s3 cp s3://$CONFIG_BUCKET/$CONFIG_DIR/$config $(echo $config | sed 's%@%/%g'); done; fi",
+             "for config in $(aws s3 ls s3://$CONFIG_BUCKET/$ROOT/ --recursive | awk -F\"$ROOT/\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$ROOT/$config /$config; done",
+             "if [ ! -z $IS_ADMIN ]; then for config in $(aws s3 ls s3://$CONFIG_BUCKET/$IS_ADMIN/ --recursive | awk -F\"$IS_ADMIN/\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$IS_ADMIN/$config /$config; done; fi",
+
+             "### Cloudwatch Memory/Disk ###",
+             "#yum install -y perl-Switch perl-DateTime perl-Sys-Syslog perl-LWP-Protocol-http",
+             "#curl http://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.1.zip -O",
+             "#unzip CloudWatchMonitoringScripts-1.2.1.zip",
+             "#rm CloudWatchMonitoringScripts-1.2.1.zip",
+             "#mkdir -p /var/awslogs/state",
+             "#(crontab -l ; echo \"*/5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron\") | crontab -",
+
+             "### Set services to start at boot / Restart Services ###",
+             "case "$StartUpMgr" in",
+             "  systemctl)",
+             "    $StartUpMgr enable ${SERVICES[@]}",
+             "    $StartUpMgr restart ${SERVICES[@]}",
+             "  ;;",
+             "  update-rc.d)",
+             "    for s in ${SERVICES[@]}; do $StartUpMgr $s enable; service $s restart; done"
+             "  ;;",
+             "  chkconfig)",
+             "    for s in ${SERVICES[@]}; do $StartUpMgr $s on; service $s restart; done"
+             "  ;;",
+             "esac",
+           ]
+         }
+      }
+   ]
+}

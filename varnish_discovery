@@ -1,0 +1,56 @@
+#!/bin/bash
+
+#This script will identify your Varnish nodes and make Magento 2 aware of them. 
+#This allows Magento 2 to be able to purge cache across the Varnish fleet.
+
+#Requirements
+# AWS CLI
+# jq
+
+#Permissions
+# IAM Policy:    AmazonEC2ReadOnlyAccess
+# SecurityGroup: Ingress for $VARNISH_ADMIN_PORT
+# acl purge:     Allow purges from VPC CIDR, e.g. acl purge {"localhost";"172.18.0.0"/16;}
+# Shared Secret: /etc/varnish/secret
+
+############# USER DEFINED VARIABLES #############
+
+MAGE_BINARY=
+VARNISH_ADMIN_PORT=6082
+TAG_KEY=
+TAG_VALUE=
+
+########## DO NOT EDIT BELOW THIS POINT ##########
+
+REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | awk -F\" '/region/ {print $4}')
+NODES=()
+COUNT=0
+NODE_COUNT=0
+
+function node_discovery {
+  #Checking for running nodes with the specified tags.
+
+  aws --region=$REGION ec2 describe-instances --filters "Name=$TAG_KEY,Values=$TAG_VALUE" |\
+  jq --raw-output '.[][].Instances[] | select(.State.Name=="running") | .PrivateIpAddress'
+}
+
+function output_format {
+  #Format the node output for Magento.
+
+  for node in $(node_discovery); do
+    NODES+=($node);
+  done
+  
+  NODE_COUNT=${#NODES[@]}
+  
+  for node in ${NODES[@]}; do
+    COUNT+=1
+    if [ "$COUNT" -lt "$NODE_COUNT" ]; then
+      printf "$node:$VARNISH_ADMIN_PORT,"
+    else
+      printf "$node:$VARNISH_ADMIN_PORT"
+    fi
+  done
+}
+
+$MAGE_BINARY setup:config:set --http-cache-hosts=$(output_format) --no-interaction
