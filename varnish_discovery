@@ -3,6 +3,9 @@
 #This script will identify your Varnish nodes and make Magento 2 aware of them. 
 #This allows Magento 2 to be able to purge cache across the Varnish fleet.
 
+#How Magento cache clearing works with Varnish
+#http://devdocs.magento.com/guides/v2.0/config-guide/varnish/use-varnish-cache.html
+
 #Requirements
 # AWS CLI
 # jq
