@@ -9,14 +9,13 @@
 
 #Permissions
 # IAM Policy:    AmazonEC2ReadOnlyAccess
-# SecurityGroup: Ingress for $VARNISH_ADMIN_PORT
+# SecurityGroup: Ingress for $VARNISH_PORT
 # acl purge:     Allow purges from VPC CIDR, e.g. acl purge {"localhost";"172.18.0.0"/16;}
-# Shared Secret: /etc/varnish/secret
 
 ############# USER DEFINED VARIABLES #############
 
 MAGE_BINARY=
-VARNISH_ADMIN_PORT=6082
+VARNISH_PORT=80
 TAG_KEY=
 TAG_VALUE=
 
@@ -46,9 +45,9 @@ function output_format {
   for node in ${NODES[@]}; do
     COUNT+=1
     if [ "$COUNT" -lt "$NODE_COUNT" ]; then
-      printf "$node:$VARNISH_ADMIN_PORT,"
+      printf "$node:$VARNISH_PORT,"
     else
-      printf "$node:$VARNISH_ADMIN_PORT"
+      printf "$node:$VARNISH_PORT"
     fi
   done
 }
