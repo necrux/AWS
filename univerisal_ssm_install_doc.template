@@ -45,10 +45,8 @@
              "#yum-config-manager --enable epel",
 
              "### Copy Server Configs. ###",
-             "#for config in $(aws s3 ls s3://$CONFIG_BUCKET/$CONFIG_DIR/ | awk '{print $4}'); do aws s3 cp s3://$CONFIG_BUCKET/$CONFIG_DIR/$config $(echo $config | sed 's%@%/%g'); done",
-             "#if [ ! -z $IS_ADMIN ]; then for config in $(aws s3 ls s3://$CONFIG_BUCKET/$IS_ADMIN/ | awk '{print $4}'); do aws s3 cp s3://$CONFIG_BUCKET/$CONFIG_DIR/$config $(echo $config | sed 's%@%/%g'); done; fi",
-             "for config in $(aws s3 ls s3://$CONFIG_BUCKET/$ROOT/ --recursive | awk -F\"$ROOT/\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$ROOT/$config /$config; done",
-             "if [ ! -z $IS_ADMIN ]; then for config in $(aws s3 ls s3://$CONFIG_BUCKET/$IS_ADMIN/ --recursive | awk -F\"$IS_ADMIN/\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$IS_ADMIN/$config /$config; done; fi",
+             "for config in $(aws s3 ls s3://$CONFIG_BUCKET/$ROOT/ --recursive | awk -F\\\"$ROOT/\\\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$ROOT/$config /$config; done",
+             "if [ ! -z $IS_ADMIN ]; then for config in $(aws s3 ls s3://$CONFIG_BUCKET/$IS_ADMIN/ --recursive | awk -F\\\"$IS_ADMIN/\\\" '!/\/$/ {print $2}'); do aws s3 cp s3://$CONFIG_BUCKET/$IS_ADMIN/$config /$config; done; fi",
 
              "### Cloudwatch Memory/Disk ###",
              "#yum install -y perl-Switch perl-DateTime perl-Sys-Syslog perl-LWP-Protocol-http",
