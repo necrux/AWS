@@ -23,11 +23,11 @@
              "if hash systemctl > /dev/null 2>&1; then StartUpMgr=systemctl; elif hash update-rc.d > /dev/null 2>&1; then StartUpMgr=update-rc.d; else StartUpMgr=chkconfig; fi,
 
              "### Setting variables just in case. ###",
-             "PrivateIp=$(awk -F\" '/privateIp/ {print $4}' /tmp/identity)",
-             "AZ=$(awk -F\" '/availabilityZone/ {print $4}' /tmp/identity)",
-             "InstanceId=$(awk -F\" '/instanceId/ {print $4}' /tmp/identity)",
-             "Account=$(awk -F\" '/accountId/ {print $4}' /tmp/identity)",
-             "Region=$(awk -F\" '/region/ {print $4}' /tmp/identity)",
+             "PrivateIp=$(awk -F\\\" '/privateIp/ {print $4}' /tmp/identity)",
+             "AZ=$(awk -F\\\" '/availabilityZone/ {print $4}' /tmp/identity)",
+             "InstanceId=$(awk -F\\\" '/instanceId/ {print $4}' /tmp/identity)",
+             "Account=$(awk -F\\\" '/accountId/ {print $4}' /tmp/identity)",
+             "Region=$(awk -F\\\" '/region/ {print $4}' /tmp/identity)",
              "rm -f /tmp/identity)",
 
              "### Check for yum/apt lock. ###",
