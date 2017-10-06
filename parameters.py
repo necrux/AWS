@@ -1,10 +1,9 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-from sys import argv,exit
-import textwrap
 import os
 import json
+import textwrap
+from sys import argv
 
 def usage():
   print textwrap.dedent("""\
@@ -23,20 +22,20 @@ def usage():
 #Basic input validation.  
 if len(argv) == 1:
   usage()
-  exit() 
+  exit(1) 
 elif not os.path.isfile(argv[1]):
   usage()
   print "File '%s' does not exists." % (argv[1])
-  exit()
+  exit(1)
 
 #Open specified file, verify format, and load it as JSON.
 input_file = open(argv[1], 'r')
 try:
   json_file = json.load(input_file)
 except ValueError:
-  usage()
+  usage(1)
   print "Are you sure this is a properly formatted JSON file?"
-  exit()
+  exit(1)
 input_file.close
 
 #Opening output file. If file exists it WILL be overwritten.
