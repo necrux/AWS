@@ -1,0 +1,42 @@
+#!/bin/bash
+# A simple script to sync a specified directory with
+# an S3 bucket. Simply fill in the ${CONTENT_PATH},
+# ${BUCKET}, and ${SYNC_OPTIONS} parameters.
+
+# There are example options populated in the
+# ${SYNC_OPTIONS} array. Run `aws s3 sync help` to
+# see all available options.
+
+# This script can be manually invoked, ran as a cron,
+# or triggered from an inotify event. 
+
+CONTENT_PATH=
+BUCKET=
+SYNC_OPTIONS=(
+  '--delete'
+  '--cache-control max-age=604800'
+  '--expires $(date -d "+1 month" +%Y-%m-%d)'
+  '--acl bucket-owner-full-control'
+  '--storage-class STANDARD'
+  '--metadata-directive REPLACE'
+)
+
+function is_command {
+  local FAILURE
+
+  for program in $@; do
+    hash ${program} > /dev/null 2>&1
+    if [ $? != 0 ]; then
+      echo "Command not found: ${program}" >&2
+      FAILURE='true'
+    fi
+  done
+
+  if [ ! -z ${FAILURE} ]; then
+    exit 127
+  fi
+}
+
+is_command aws
+
+eval $(echo aws s3 sync ${CONTENT_PATH} s3://${BUCKET} "${SYNC_OPTIONS[@]}")
