@@ -20,7 +20,7 @@
 
              "curl -s http://169.254.169.254/latest/dynamic/instance-identity/document > /tmp/identity",
              "if hash yum > /dev/null 2>&1; then PackageMgr=yum; else PackageMgr=apt-get; fi",
-             "if hash systemctl > /dev/null 2>&1; then StartUpMgr=systemctl; elif hash update-rc.d > /dev/null 2>&1; then StartUpMgr=update-rc.d; else StartUpMgr=chkconfig; fi,
+             "if hash systemctl > /dev/null 2>&1; then StartUpMgr=systemctl; elif hash update-rc.d > /dev/null 2>&1; then StartUpMgr=update-rc.d; else StartUpMgr=chkconfig; fi",
 
              "### Setting variables just in case. ###",
              "PrivateIp=$(awk -F\\\" '/privateIp/ {print $4}' /tmp/identity)",
@@ -57,18 +57,18 @@
              "#(crontab -l ; echo \"*/5 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --disk-space-util --disk-path=/ --from-cron\") | crontab -",
 
              "### Set services to start at boot / Restart Services ###",
-             "case "$StartUpMgr" in",
+             "case \"$StartUpMgr\" in",
              "  systemctl)",
              "    $StartUpMgr enable ${SERVICES[@]}",
              "    $StartUpMgr restart ${SERVICES[@]}",
              "  ;;",
              "  update-rc.d)",
-             "    for s in ${SERVICES[@]}; do $StartUpMgr $s enable; service $s restart; done"
+             "    for s in ${SERVICES[@]}; do $StartUpMgr $s enable; service $s restart; done",
              "  ;;",
              "  chkconfig)",
-             "    for s in ${SERVICES[@]}; do $StartUpMgr $s on; service $s restart; done"
+             "    for s in ${SERVICES[@]}; do $StartUpMgr $s on; service $s restart; done",
              "  ;;",
-             "esac",
+             "esac"
            ]
          }
       }
